@@ -1,5 +1,6 @@
 from fuel.transformers import SourcewiseTransformer
 import numpy
+import random
 
 class OneHotEncode(SourcewiseTransformer):
     """
@@ -37,6 +38,5 @@ class RandomHorizontalFlip(SourcewiseTransformer):
         return self._example_transform(example, source_name)
 
     def _example_transform(self, example, source_name):
-        print example.shape
-
-        return 
+        flip = random.randint(0, 1)*2-1
+        return example[:,:,::flip]
