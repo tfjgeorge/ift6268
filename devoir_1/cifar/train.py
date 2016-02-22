@@ -25,7 +25,7 @@ else:
 
 batch_size = 32
 
-train_dataset = CIFAR10(('train',), subset=slice(0,45000))
+train_dataset = CIFAR10(('train',), subset=slice(0,45000-8))
 train_stream = DataStream.default_stream(
     train_dataset,
     iteration_scheme=SequentialScheme(train_dataset.num_examples, batch_size)
@@ -33,7 +33,7 @@ train_stream = DataStream.default_stream(
 train_stream = OneHotEncode(train_stream, which_sources=('targets',))
 train_stream = RandomHorizontalFlip(train_stream, which_sources=('features',))
 
-test_dataset = CIFAR10(('train',), subset=slice(45000,50000))
+test_dataset = CIFAR10(('train',), subset=slice(45000,50000-8))
 test_stream = DataStream.default_stream(
     test_dataset,
     iteration_scheme=SequentialScheme(test_dataset.num_examples, batch_size)
