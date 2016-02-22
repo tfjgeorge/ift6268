@@ -1,18 +1,26 @@
-from fuel.datasets import CIFAR10
-from fuel.streams import DataStream
-from fuel.schemes import SequentialScheme
-
-from model import get_model
-import theano
-from theano import tensor
-from transformers import OneHotEncode, RandomHorizontalFlip
-from theano.tensor.nnet import categorical_crossentropy
-
 from blocks.extensions import Printing, Timing, FinishAfter
 from blocks.extensions.monitoring import TrainingDataMonitoring, DataStreamMonitoring
 from blocks.algorithms import GradientDescent, Adam
 from blocks.main_loop import MainLoop
 from blocks_extras.extensions.plot import Plot
+
+from fuel.datasets import CIFAR10
+from fuel.streams import DataStream
+from fuel.schemes import SequentialScheme
+
+from model import get_model
+import socket
+import theano
+from theano import tensor
+from theano.tensor.nnet import categorical_crossentropy
+from transformers import OneHotEncode, RandomHorizontalFlip
+
+
+running_on_laptop = socket.gethostname() == 'yop'
+if running_on_laptop:
+	host_plot = 'http://localhost:5006'
+else:
+	host_plot = 'http://hades.calculquebec.ca:5042'
 
 
 batch_size = 32
@@ -47,13 +55,12 @@ algorithm = GradientDescent(
 	on_unused_sources='ignore'
 )
 
-host_plot = 'http://localhost:5006'
-
 extensions = [
 	Timing(),
 	TrainingDataMonitoring([loss], after_epoch=True),
 	DataStreamMonitoring(variables=[loss], data_stream=test_stream, prefix="test"),
 	Plot('CIFAR10', channels=[['loss','test_loss']], after_epoch=True, server_url=host_plot),
+	# Plot('CIFAR10', channels=[['loss','test_loss'],['error','test_error']], after_epoch=True, server_url=host_plot),
 	Printing(),
 	FinishAfter(after_n_epochs=20)
 ]
