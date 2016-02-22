@@ -1,6 +1,6 @@
 from blocks.extensions import Printing, Timing, FinishAfter
 from blocks.extensions.monitoring import TrainingDataMonitoring, DataStreamMonitoring
-from blocks.algorithms import GradientDescent, Adam
+from blocks.algorithms import GradientDescent, Adam, Scale
 from blocks.main_loop import MainLoop
 from blocks_extras.extensions.plot import Plot
 
@@ -51,7 +51,8 @@ loss.name = 'loss'
 algorithm = GradientDescent(
 	cost=loss,
 	parameters=all_parameters,
-	step_rule=Adam(),
+#	step_rule=Adam(),
+	step_rule=Scale(learning_rate=0.1),
 	on_unused_sources='ignore'
 )
 
