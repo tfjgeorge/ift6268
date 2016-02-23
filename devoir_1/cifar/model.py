@@ -1,4 +1,4 @@
-from layers import convolutional, activation, maxpool
+from layers import convolutional, activation, maxpool, batch_norm
 import theano
 from theano import tensor
 
@@ -19,6 +19,7 @@ def get_model(X, batch_size, image_dimension):
 
 	input_shape = (batch_size, 3, image_dimension, image_dimension)
 	all_parameters = []
+	acc_parameters = []
 
 	#############################################
 	# a first convolution with 64 (3, 3) filters
@@ -69,9 +70,12 @@ def get_model(X, batch_size, image_dimension):
 	output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 10, (1, 1))
 	all_parameters += params
 
+	output, output_test, params, output_shape, cacc_parameters = batch_norm(output, output_test, output_shape)
+	acc_parameters += cacc_parameters
+
 	# softmax
 	output = multi_dim_softmax(output)
 	output_test = multi_dim_softmax(output_test)
 
 	#
-	return output, output_test, all_parameters
+	return output, output_test, all_parameters, acc_parameters
