@@ -148,11 +148,13 @@ for epoch in range(20):
 		print 'improved valid error'
 		# save weights
 		numpy.savez('best_weights.npz', [param.get_value() for param in all_parameters])
+		# save batch norm weights
+		numpy.savez('best_weights_bn.npz', [acc.get_value() for val, acc in acc_parameters])
+
 
 	# reinit batch accumulators:
 	for val, acc in acc_parameters:
 		acc.set_value(numpy.zeros(acc.get_value().shape))
-
 
 # save train and valid hist
 numpy.savez('plots.npz', [train_loss_hist, train_error_hist, valid_loss_hist, valid_error_hist])
