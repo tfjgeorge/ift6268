@@ -9,7 +9,9 @@ def multi_dim_softmax(X):
 	X : a 4d tensor (batch, feature_map, x, y)
 	returns a 4d tensor (batch, softmax, x, y)
 	"""
-	exps = tensor.exp(X)
+	maxs = X.max(axis=1, keepdims=True)
+	maxs = tensor.addbroadcast(maxs, 1)
+	exps = tensor.exp(X-maxs)
 	sums = exps.sum(axis=1, keepdims=True)
 	sums = tensor.addbroadcast(sums, 1)
 	return exps/sums
@@ -17,7 +19,7 @@ def multi_dim_softmax(X):
 
 def get_model(X, batch_size, image_dimension):
 
-	input_shape = (batch_size, 3, image_dimension, image_dimension)
+	input_shape = (batch_size, 3, image_dimension[0], image_dimension[1])
 	all_parameters = []
 	acc_parameters = []
 
