@@ -85,7 +85,7 @@ class CustomAnnotation(Annotation):
 
 def batch_norm(X, X_test, input_shape):
 
-	epsilon = 10**-10
+	epsilon = 10**-2
 
 	means = theano.tensor.mean(X, axis=0)
 	variances = theano.tensor.var(X, axis=0)
@@ -97,6 +97,6 @@ def batch_norm(X, X_test, input_shape):
 	variances_test = theano.shared( numpy.zeros((1, input_shape[1], 1, 1)) )
 
 	output = theano.tensor.addbroadcast(gammas, 0, 2, 3) * (X - means) / (variances + epsilon)**0.5 + theano.tensor.addbroadcast(betas, 0, 2, 3)
-	output_test = theano.tensor.addbroadcast(gammas, 0, 2, 3) * (X - theano.tensor.addbroadcast(means_test, 0, 2, 3)) / (theano.tensor.addbroadcast(variances_test, 0, 2, 3) + epsilon)**0.5 + theano.tensor.addbroadcast(betas, 0, 2, 3)
+	output_test = theano.tensor.addbroadcast(gammas, 0, 2, 3) * (X_test - theano.tensor.addbroadcast(means_test, 0, 2, 3)) / (theano.tensor.addbroadcast(variances_test, 0, 2, 3) + epsilon)**0.5 + theano.tensor.addbroadcast(betas, 0, 2, 3)
 
 	return output, output_test, [gammas, betas], input_shape, [(means, means_test), (variances, variances_test)]
