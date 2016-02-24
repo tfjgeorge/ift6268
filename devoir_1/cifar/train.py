@@ -1,8 +1,12 @@
+from blocks_extras.extensions.plot import Plot
+
+from blocks.algorithms import GradientDescent, Adam
 from blocks.extensions import Printing, Timing, FinishAfter
 from blocks.extensions.monitoring import TrainingDataMonitoring, DataStreamMonitoring
-from blocks.algorithms import GradientDescent, Adam
+from blocks.graph import ComputationGraph
 from blocks.main_loop import MainLoop
-from blocks_extras.extensions.plot import Plot
+
+from extensions import ResetBatchNorm
 
 from fuel.datasets import CIFAR10
 from fuel.streams import DataStream
@@ -46,13 +50,16 @@ test_stream = OneHotEncode(test_stream, which_sources=('targets',))
 X = tensor.ftensor4('features')
 targets = tensor.fmatrix('targets')
 
-output, output_test, all_parameters = get_model(X, batch_size, 32)
+output, output_test, all_parameters, acc_parameters = get_model(X, batch_size, 32)
 
 loss = categorical_crossentropy(output[:,:,0,0], targets).mean()
 loss.name = 'loss'
 
 error = tensor.neq(tensor.argmax(output[:,:,0,0], axis=1), tensor.argmax(targets, axis=1)).mean()
 error.name = 'error'
+
+cg = ComputationGraph([loss])
+print cg.auxiliary_variables
 
 algorithm = GradientDescent(
 	cost=loss,
@@ -65,7 +72,7 @@ extensions = [
 	Timing(),
 	TrainingDataMonitoring([loss, error], after_epoch=True),
 	DataStreamMonitoring(variables=[loss, error], data_stream=test_stream, prefix="test"),
-	# Plot('CIFAR10', channels=[['loss','test_loss']], after_epoch=True, server_url=host_plot),
+	ResetBatchNorm(acc_parameters, (slice_train.stop - slice_train.start)/batch_size),
 	Plot('CIFAR10', channels=[['loss','test_loss'],['error','test_error']], after_epoch=True, server_url=host_plot),
 	Printing(),
 	FinishAfter(after_n_epochs=20)
