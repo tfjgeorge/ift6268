@@ -1,4 +1,4 @@
-from layers import convolutional, activation, maxpool, batch_norm
+from layers import convolutional, activation, maxpool, batch_norm, avgpool
 import theano
 from theano import tensor
 
@@ -66,7 +66,7 @@ def get_model(X, batch_size, image_dimension):
 	all_parameters += params
 
 	# maxpool with size=(4, 4) and fully connected
-	output, output_test, params, output_shape = maxpool(output, output_test, output_shape, (4, 4))
+	output, output_test, params, output_shape = avgpool(output, output_test, output_shape, (4, 4))
 	output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 10, (1, 1))
 	all_parameters += params
 

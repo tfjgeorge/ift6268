@@ -52,6 +52,18 @@ def maxpool(X, X_test, input_shape, size):
 
 	return pooled, pooled_test, [], output_shape
 
+def avgpool(X, X_test, input_shape, size):
+	"""
+	A maxpool layer
+	"""
+
+	pooled = max_pool_2d(input=X, ds=size, ignore_border=True,  mode='average_exc_pad')
+	pooled_test = max_pool_2d(input=X_test, ds=size, ignore_border=True, mode='average_exc_pad')
+	output_shape = (input_shape[0], input_shape[1], input_shape[2]/size[0], input_shape[3]/size[1])
+
+	return pooled, pooled_test, [], output_shape
+
+
 
 def activation(X, X_test, input_shape, activation_type='relu'):
 

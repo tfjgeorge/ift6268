@@ -1,5 +1,6 @@
 from blocks.extensions import Printing, Timing, FinishAfter
 from blocks.extensions.monitoring import TrainingDataMonitoring, DataStreamMonitoring
+from blocks.extensions.saveload import Checkpoint
 from blocks.algorithms import GradientDescent, Adam, Scale
 from blocks.main_loop import MainLoop
 from blocks_extras.extensions.plot import Plot
@@ -58,7 +59,7 @@ algorithm = GradientDescent(
 	cost=loss,
 	parameters=all_parameters,
 #	step_rule=Adam(),
-	step_rule=Scale(learning_rate=0.1),
+	step_rule=Scale(learning_rate=0.05),
 	on_unused_sources='ignore'
 )
 
@@ -69,7 +70,8 @@ extensions = [
 	# Plot('CIFAR10', channels=[['loss','test_loss']], after_epoch=True, server_url=host_plot),
 	Plot('CIFAR10', channels=[['loss','test_loss'],['error','test_error']], after_epoch=True, server_url=host_plot),
 	Printing(),
-	FinishAfter(after_n_epochs=20)
+	FinishAfter(after_n_epochs=20),
+	Checkpoint('cifar_train')
 ]
 
 main_loop = MainLoop(data_stream=train_stream, algorithm=algorithm,

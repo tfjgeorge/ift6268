@@ -6,8 +6,6 @@ from blocks.extensions.monitoring import TrainingDataMonitoring, DataStreamMonit
 from blocks.graph import ComputationGraph
 from blocks.main_loop import MainLoop
 
-from extensions import ResetBatchNorm
-
 from fuel.datasets import CIFAR10
 from fuel.streams import DataStream
 from fuel.schemes import SequentialScheme
