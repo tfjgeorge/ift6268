@@ -44,7 +44,7 @@ f_valid = theano.function(
 )
 
 ei_valid = test_stream.get_epoch_iterator()
-valid_loss, valid_error = 0, 0
+valid_error = 0
 
 for batch_num in range(test_dataset.num_examples/batch_size):
 	try:
@@ -53,9 +53,7 @@ for batch_num in range(test_dataset.num_examples/batch_size):
 		continue
 
 	outputs = f_valid(batch[0], batch[1])
-	valid_loss += outputs[0]
-	valid_error += outputs[1]
+	valid_error += outputs[0]
 
-valid_loss /= test_dataset.num_examples/batch_size
 valid_error /= test_dataset.num_examples/batch_size
-print valid_loss, valid_error
+print valid_error
