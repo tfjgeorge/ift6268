@@ -51,7 +51,7 @@ test_stream = OneHotEncode(test_stream, which_sources=('targets',))
 X = tensor.ftensor4('features')
 targets = tensor.fmatrix('targets')
 
-output, output_test, all_parameters, acc_parameters = get_model(X, batch_size, 32)
+output, output_test, all_parameters, acc_parameters = get_model(X, batch_size, (32, 32))
 
 loss = categorical_crossentropy(output[:,:,0,0], targets).mean()
 loss.name = 'loss'
