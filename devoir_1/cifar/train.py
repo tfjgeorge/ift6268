@@ -66,7 +66,7 @@ error_test = tensor.neq(tensor.argmax(output_test[:,:,0,0], axis=1), tensor.argm
 error.name = 'error_test'
 
 # construct update rule
-learning_rate = 0.05
+learning_rate = 0.02
 updates, updates_stats = [], []
 for param in all_parameters:
 	updates.append((param, param - learning_rate * tensor.grad(loss, param)))
