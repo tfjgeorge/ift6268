@@ -75,7 +75,7 @@ for val, acc in acc_parameters:
 
 f_train = theano.function(
 	inputs=[X, targets],
-	outputs=[loss, error],
+	outputs=[loss, error, acc_parameters[1][1].shape],
 	updates=updates
 )
 
@@ -107,6 +107,8 @@ for epoch in range(20):
 		outputs = f_train(batch[0], batch[1])
 		train_loss += outputs[0]
 		train_error += outputs[1]
+
+		print outputs[2]
 
 	# update statistics for batch norm
 	ei_train = train_stream.get_epoch_iterator()
