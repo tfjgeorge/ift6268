@@ -95,7 +95,7 @@ def batch_norm(X, X_test, input_shape):
 	means_test = theano.shared( numpy.zeros((1, input_shape[1], input_shape[2], input_shape[3])) )
 	variances_test = theano.shared( numpy.zeros((1, input_shape[1], input_shape[2], input_shape[3])) )
 
-	output = gammas * (X - means) / (variances + epsilon)**0.5 + betas
-	output_test = gammas * (X - means_test) / (variances_test + epsilon)**0.5 + betas
+	output = theano.tensor.addbroadcast(gammas, 0) * (X - means) / (variances + epsilon)**0.5 + theano.tensor.addbroadcast(betas, 0)
+	output_test = theano.tensor.addbroadcast(gammas, 0) * (X - means_test) / (variances_test + epsilon)**0.5 + theano.tensor.addbroadcast(betas, 0)
 
 	return output, X_test, [gammas, betas], input_shape, [(means, means_test), (variances, variances_test)]
