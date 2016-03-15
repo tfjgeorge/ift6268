@@ -1,0 +1,11 @@
+#!/bin/bash
+#PBS -l walltime=5:00:00
+#PBS -l nodes=1:ppn=1
+#PBS -r n
+#PBS -q @hades
+ 
+module load CUDA
+cd $HOME/ift6268/devoir_1/cifar
+source activate ift6266
+export FUEL_DATA_PATH="$HOME/ift6268/data"
+THEANO_FLAGS="floatX=float32,device=gpu,nvcc.fastmath=True" python train_mano.py > output.out
