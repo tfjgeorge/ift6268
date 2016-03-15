@@ -74,6 +74,7 @@ def get_model(X, batch_size, image_dimension):
 
 	output, output_test, params, output_shape, cacc_parameters = batch_norm(output, output_test, output_shape)
 	acc_parameters += cacc_parameters
+	all_parameters += params
 
 	# softmax
 	output = multi_dim_softmax(output)

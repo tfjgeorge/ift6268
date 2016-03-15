@@ -85,17 +85,18 @@ class CustomAnnotation(Annotation):
 
 def batch_norm(X, X_test, input_shape):
 
-	epsilon = 10**-3
+	epsilon = 10**-2
 
 	means = theano.tensor.mean(X, axis=0)
 	variances = theano.tensor.var(X, axis=0)
-	gammas = numpy.ones((1, input_shape[1], input_shape[2], input_shape[3]))
-	betas = numpy.zeros((1, input_shape[1], input_shape[2], input_shape[3]))
 
-	means_test = theano.shared( numpy.zeros((1, input_shape[1], input_shape[2], input_shape[3])) )
-	variances_test = theano.shared( numpy.zeros((1, input_shape[1], input_shape[2], input_shape[3])) )
+	gammas = theano.shared( numpy.ones((1, input_shape[1], 1, 1)) )
+	betas = theano.shared( numpy.zeros((1, input_shape[1], 1, 1)) )
 
-	output = gammas * (X - means) / (variances + epsilon)**0.5 + betas
-	output_test = gammas * (X - means_test) / (variances_test + epsilon)**0.5 + betas
+	means_test = theano.shared( numpy.zeros((1, input_shape[1], 1, 1)) )
+	variances_test = theano.shared( numpy.zeros((1, input_shape[1], 1, 1)) )
 
-	return output, X_test, [gammas, betas], input_shape, [(means, means_test), (variances, variances_test)]
+	output = theano.tensor.addbroadcast(gammas, 0, 2, 3) * (X - means) / (variances + epsilon)**0.5 + theano.tensor.addbroadcast(betas, 0, 2, 3)
+	output_test = theano.tensor.addbroadcast(gammas, 0, 2, 3) * (X_test - theano.tensor.addbroadcast(means_test, 0, 2, 3)) / (theano.tensor.addbroadcast(variances_test, 0, 2, 3) + epsilon)**0.5 + theano.tensor.addbroadcast(betas, 0, 2, 3)
+
+	return output, output_test, [gammas, betas], input_shape, [(means, means_test), (variances, variances_test)]
