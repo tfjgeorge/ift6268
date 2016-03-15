@@ -16,7 +16,7 @@ import socket
 import theano
 from theano import tensor
 from theano.tensor.nnet import categorical_crossentropy
-from transformers import OneHotEncode, RandomHorizontalFlip
+from transformers import OneHotEncode10, OneHotEncode100, RandomHorizontalFlip
 
 running_on_laptop = socket.gethostname() == 'yop'
 if running_on_laptop:
@@ -28,6 +28,8 @@ else:
 	slice_train = slice(0,45000-8)
 	slice_test = slice(45000,50000-8)
 
+
+## Load cifar10 stream
 batch_size = 32
 num_train_example = slice_train.stop - slice_train.start
 num_test_example = slice_test.stop - slice_test.start
@@ -37,7 +39,7 @@ train_stream = DataStream.default_stream(
     train_dataset,
     iteration_scheme=SequentialScheme(train_dataset.num_examples, batch_size)
 )
-train_stream = OneHotEncode(train_stream, which_sources=('targets',))
+train_stream = OneHotEncode10(train_stream, which_sources=('targets',))
 train_stream = RandomHorizontalFlip(train_stream, which_sources=('features',))
 
 test_dataset = CIFAR10(('train',), subset=slice_test)
@@ -45,30 +47,58 @@ test_stream = DataStream.default_stream(
     test_dataset,
     iteration_scheme=SequentialScheme(test_dataset.num_examples, batch_size)
 )
-test_stream = OneHotEncode(test_stream, which_sources=('targets',))
+test_stream = OneHotEncode10(test_stream, which_sources=('targets',))
 
+## Load cifar100 stream
+batch_size = 32
+num_train_example = slice_train.stop - slice_train.start
+num_test_example = slice_test.stop - slice_test.start
+
+train_dataset_100 = CIFAR100(('train',), subset=slice_train)
+train_stream_100 = DataStream.default_stream(
+    train_dataset_100,
+    iteration_scheme=SequentialScheme(train_dataset_100.num_examples, batch_size)
+)
+train_stream_100 = OneHotEncode100(train_stream_100, which_sources=('fine_labels',))
+train_stream_100 = RandomHorizontalFlip(train_stream_100, which_sources=('features',))
+
+test_dataset_100 = CIFAR100(('train',), subset=slice_test)
+test_stream_100 = DataStream.default_stream(
+    test_dataset_100,
+    iteration_scheme=SequentialScheme(test_dataset_100.num_examples, batch_size)
+)
+test_stream_100 = OneHotEncode100(test_stream_100, which_sources=('fine_labels',))
+
+## build computational graph
 X = tensor.ftensor4('features')
 targets = tensor.fmatrix('targets')
+targets_100 = tensor.fmatrix('fine_labels')
 
-output, output_test, all_parameters, acc_parameters = get_model(X, batch_size, (32, 32))
+output_10, output_test_10, output_100, output_test_100, all_parameters, acc_parameters = get_model(X, batch_size, (32, 32))
 
-loss = categorical_crossentropy(output[:,:,0,0], targets).mean()
+alpha = 0.5
+
+loss = alpha * categorical_crossentropy(output_10[:,:,0,0], targets).mean()
 loss.name = 'loss'
 
-loss_test = categorical_crossentropy(output_test[:,:,0,0], targets).mean()
+loss_100 = (1-alpha) * categorical_crossentropy(output_100[:,:,0,0], targets_100).mean()
+loss_100.name = 'loss_100'
+
+loss_test = categorical_crossentropy(output_test_10[:,:,0,0], targets).mean()
 loss.name = 'loss_test'
 
-error = tensor.neq(tensor.argmax(output[:,:,0,0], axis=1), tensor.argmax(targets, axis=1)).mean()
+error = tensor.neq(tensor.argmax(output_10[:,:,0,0], axis=1), tensor.argmax(targets, axis=1)).mean()
 error.name = 'error'
 
-error_test = tensor.neq(tensor.argmax(output_test[:,:,0,0], axis=1), tensor.argmax(targets, axis=1)).mean()
+error_test = tensor.neq(tensor.argmax(output_test_10[:,:,0,0], axis=1), tensor.argmax(targets, axis=1)).mean()
 error.name = 'error_test'
 
 # construct update rule
 learning_rate = 0.05
-updates, updates_stats = [], []
+updates, updates_100, updates_stats = [], [], []
 for param in all_parameters:
 	updates.append((param, param - learning_rate * tensor.grad(loss, param)))
+	updates_100.append((param, param - learning_rate * tensor.grad(loss_100, param)))
 for val, acc in acc_parameters:
 	updates_stats.append((acc, acc + val/(num_train_example/batch_size)))
 
@@ -76,6 +106,12 @@ f_train = theano.function(
 	inputs=[X, targets],
 	outputs=[loss, error],
 	updates=updates
+)
+
+f_train_100 = theano.function(
+	inputs=[X, targets_100],
+	outputs=[loss_100],
+	updates=updates_100
 )
 
 f_stats = theano.function(
@@ -94,18 +130,26 @@ train_loss_hist, train_error_hist, valid_loss_hist, valid_error_hist = [],[],[],
 for epoch in range(20):
 	ei_train = train_stream.get_epoch_iterator()
 	ei_valid = test_stream.get_epoch_iterator()
+	ei_train_100 = train_stream_100.get_epoch_iterator()
+	ei_valid_100 = test_stream_100.get_epoch_iterator()
 
 	train_loss, train_error, valid_loss, valid_error = 0, 0, 0, 0
-
 
 	for batch_num in range(num_train_example/batch_size):
 		try:
 			batch = next(ei_train)
+			batch_100 = next(ei_train_100)
 		except StopIteration:
 			continue
 		outputs = f_train(batch[0], batch[1])
 		train_loss += outputs[0]
 		train_error += outputs[1]
+
+		# print len(batch_100)
+		# # print batch_100[0], batch_100[1]
+		# print len(batch_100[0]), len(batch_100[1]), len(batch_100[2])
+		# print batch_100[0][0].shape, batch_100[1][0].shape, batch_100[2][0].shape
+		outputs = f_train_100(batch_100[1], batch_100[2])
 
 	# update statistics for batch norm
 	ei_train = train_stream.get_epoch_iterator()

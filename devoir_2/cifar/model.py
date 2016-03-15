@@ -19,65 +19,67 @@ def multi_dim_softmax(X):
 
 def get_model(X, batch_size, image_dimension):
 
-	input_shape = (batch_size, 3, image_dimension[0], image_dimension[1])
-	all_parameters = []
-	acc_parameters = []
+    input_shape = (batch_size, 3, image_dimension[0], image_dimension[1])
+    all_parameters = []
+    acc_parameters = []
 
-	#############################################
-	# a first convolution with 64 (3, 3) filters
-	output, output_test, params, output_shape = convolutional(X, X, input_shape, 64, (3, 3))
-	all_parameters += params
+    #############################################
+    # a first convolution with 64 (3, 3) filters
+    output, output_test, params, output_shape = convolutional(X, X, input_shape, 64, (3, 3))
+    all_parameters += params
 
-	# maxpool with size=(2, 2)
-	output, output_test, params, output_shape = maxpool(output, output_test, output_shape, (2, 2))
+    # maxpool with size=(2, 2)
+    output, output_test, params, output_shape = maxpool(output, output_test, output_shape, (2, 2))
 
-	# relu activation
-	output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
+    # relu activation
+    output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
 
-	#############################################
-	# a second convolution with 128 (3, 3) filters
-	output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 128, (3, 3))
-	all_parameters += params
+    #############################################
+    # a second convolution with 128 (3, 3) filters
+    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 128, (3, 3))
+    all_parameters += params
 
-	# maxpool with size=(2, 2)
-	output, output_test, params, output_shape = maxpool(output, output_test, output_shape, (2, 2))
+    # maxpool with size=(2, 2)
+    output, output_test, params, output_shape = maxpool(output, output_test, output_shape, (2, 2))
 
-	# relu activation
-	output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
-	
-	#############################################
-	# 2 convolutional layers with 256 (3, 3) filters
-	output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 256, (3, 3))
-	all_parameters += params
-	output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
-	output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 256, (3, 3))
-	all_parameters += params
+    # relu activation
+    output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
 
-	# maxpool with size=(2, 2)
-	output, output_test, params, output_shape = maxpool(output, output_test, output_shape, (2, 2))
+    #############################################
+    # 2 convolutional layers with 256 (3, 3) filters
+    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 256, (3, 3))
+    all_parameters += params
+    output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
+    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 256, (3, 3))
+    all_parameters += params
 
-	# relu activation
-	output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
+    # maxpool with size=(2, 2)
+    output, output_test, params, output_shape = maxpool(output, output_test, output_shape, (2, 2))
 
-	#############################################
-	# Fully connected
-	output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 1024, (1, 1))
-	all_parameters += params
-	output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
-	output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 1024, (1, 1))
-	all_parameters += params
+    # relu activation
+    output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
 
-	# maxpool with size=(4, 4) and fully connected
-	output, output_test, params, output_shape = avgpool(output, output_test, output_shape, (4, 4))
-	output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 10, (1, 1))
-	all_parameters += params
+    #############################################
+    # Fully connected
+    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 1024, (1, 1))
+    all_parameters += params
+    output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
+    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 1024, (1, 1))
+    all_parameters += params
 
-	output, output_test, params, output_shape, cacc_parameters = batch_norm(output, output_test, output_shape)
-	acc_parameters += cacc_parameters
+    # maxpool with size=(4, 4) and fully connected
+    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 110, (1, 1))
+    all_parameters += params
 
-	# softmax
-	output = multi_dim_softmax(output)
-	output_test = multi_dim_softmax(output_test)
+    output, output_test, params, output_shape, cacc_parameters = batch_norm(output, output_test, output_shape)
+    acc_parameters += cacc_parameters
+    
+    # softmax
+    output_10 = multi_dim_softmax(output[:,:10])
+    output_test_10 = multi_dim_softmax(output_test[:,:10])
+    
+    output_100 = multi_dim_softmax(output[:,10:])
+    output_test_100 = multi_dim_softmax(output_test[:,10:])
 
-	#
-	return output, output_test, all_parameters, acc_parameters
+    #
+    return output_10, output_test_10, output_100, output_test_100, all_parameters, acc_parameters
