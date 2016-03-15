@@ -18,7 +18,7 @@ def convolutional(X, X_test, input_shape, n_filters, filter_size):
 
 	Note
 	----
-	The convolutions are implemented using border_mode=same, that is the 
+	The convolutions are implemented using border_mode=valid, that is the 
 	output shape is the same as the input shape for the 2 last dimensions
 	"""
 
@@ -28,17 +28,20 @@ def convolutional(X, X_test, input_shape, n_filters, filter_size):
 		'conv_filters'
 	)
 
-	output_shape = (input_shape[0], n_filters, input_shape[2], input_shape[3])
-
-	output = conv2d(input=X, filters=filters, filter_shape=filters_shape, image_shape=input_shape, border_mode='full')
-	output_test = conv2d(input=X_test, filters=filters, filter_shape=filters_shape, image_shape=input_shape, border_mode='full')
-
 	shift_x = (filter_size[0] - 1) // 2
 	shift_y = (filter_size[1] - 1) // 2
 
+	output_shape = (input_shape[0], n_filters, input_shape[2] - 2 * shift_x, input_shape[3] - 2 * shift_y)
+
+	output = conv2d(input=X, filters=filters, filter_shape=filters_shape, image_shape=input_shape, border_mode='valid')
+	output_test = conv2d(input=X_test, filters=filters, filter_shape=filters_shape, image_shape=input_shape, border_mode='valid')
+
+	"""
+	# the following was use to implement a border_mode=same
+	
 	output = output[:,:,shift_x:input_shape[2]+shift_x,shift_y:input_shape[3]+shift_y]
 	output_test = output_test[:,:,shift_x:input_shape[2]+shift_x,shift_y:input_shape[3]+shift_y]
-
+	"""
 	return output, output_test, [filters], output_shape
 
 def maxpool(X, X_test, input_shape, size):
@@ -78,9 +81,6 @@ def activation(X, X_test, input_shape, activation_type='relu'):
 		raise Exception('this non linearity does not exist: %s' % activation_type)
 
 	return output, output_test, [], input_shape
-
-class CustomAnnotation(Annotation):
-	pass
 
 
 def batch_norm(X, X_test, input_shape):

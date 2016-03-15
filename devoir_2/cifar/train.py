@@ -6,7 +6,7 @@ from blocks.extensions.monitoring import TrainingDataMonitoring, DataStreamMonit
 from blocks.graph import ComputationGraph
 from blocks.main_loop import MainLoop
 
-from fuel.datasets import CIFAR10
+from fuel.datasets import CIFAR10, CIFAR100
 from fuel.streams import DataStream
 from fuel.schemes import SequentialScheme
 
@@ -17,7 +17,6 @@ import theano
 from theano import tensor
 from theano.tensor.nnet import categorical_crossentropy
 from transformers import OneHotEncode, RandomHorizontalFlip
-
 
 running_on_laptop = socket.gethostname() == 'yop'
 if running_on_laptop:
