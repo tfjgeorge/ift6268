@@ -28,13 +28,20 @@ def convolutional(X, X_test, input_shape, n_filters, filter_size):
 		'conv_filters'
 	)
 
+	biases = theano.shared(
+		numpy.zeros((1,n_filters,1,1)).astype(numpy.float32),
+		'conv_biases'
+	)
+
+	biases_b = theano.tensor.addbroadcast(biases, 0, 2, 3)
+
 	shift_x = (filter_size[0] - 1) // 2
 	shift_y = (filter_size[1] - 1) // 2
 
 	output_shape = (input_shape[0], n_filters, input_shape[2] - 2 * shift_x, input_shape[3] - 2 * shift_y)
 
-	output = conv2d(input=X, filters=filters, filter_shape=filters_shape, image_shape=input_shape, border_mode='valid')
-	output_test = conv2d(input=X_test, filters=filters, filter_shape=filters_shape, image_shape=input_shape, border_mode='valid')
+	output = conv2d(input=X, filters=filters, filter_shape=filters_shape, image_shape=input_shape, border_mode='valid') + biases_b
+	output_test = conv2d(input=X_test, filters=filters, filter_shape=filters_shape, image_shape=input_shape, border_mode='valid') + biases_b
 
 	"""
 	# the following was use to implement a border_mode=same
@@ -42,7 +49,7 @@ def convolutional(X, X_test, input_shape, n_filters, filter_size):
 	output = output[:,:,shift_x:input_shape[2]+shift_x,shift_y:input_shape[3]+shift_y]
 	output_test = output_test[:,:,shift_x:input_shape[2]+shift_x,shift_y:input_shape[3]+shift_y]
 	"""
-	return output, output_test, [filters], output_shape
+	return output, output_test, [filters, biases], output_shape
 
 def maxpool(X, X_test, input_shape, size):
 	"""
