@@ -1,4 +1,4 @@
-from layers import convolutional, activation, maxpool, batch_norm, avgpool
+from layers import convolutional_bias, activation, maxpool, batch_norm, avgpool
 import theano
 from theano import tensor
 
@@ -25,7 +25,7 @@ def get_model(X, batch_size, image_dimension):
 
     #############################################
     # a first convolution with 64 (3, 3) filters
-    output, output_test, params, output_shape = convolutional(X, X, input_shape, 64, (3, 3))
+    output, output_test, params, output_shape = convolutional_bias(X, X, input_shape, 64, (3, 3))
     all_parameters += params
 
     # maxpool with size=(2, 2)
@@ -36,7 +36,7 @@ def get_model(X, batch_size, image_dimension):
 
     #############################################
     # a second convolution with 128 (3, 3) filters
-    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 128, (3, 3))
+    output, output_test, params, output_shape = convolutional_bias(output, output_test, output_shape, 128, (3, 3))
     all_parameters += params
 
     # maxpool with size=(2, 2)
@@ -46,11 +46,11 @@ def get_model(X, batch_size, image_dimension):
     output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
 
     #############################################
-    # 2 convolutional layers with 256 (3, 3) filters
-    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 256, (3, 3))
+    # 2 convolutional_bias layers with 256 (3, 3) filters
+    output, output_test, params, output_shape = convolutional_bias(output, output_test, output_shape, 256, (3, 3))
     all_parameters += params
     output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
-    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 256, (3, 3))
+    output, output_test, params, output_shape = convolutional_bias(output, output_test, output_shape, 256, (3, 3))
     all_parameters += params
 
     # maxpool with size=(2, 2)
@@ -61,14 +61,14 @@ def get_model(X, batch_size, image_dimension):
 
     #############################################
     # Fully connected
-    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 1024, (1, 1))
+    output, output_test, params, output_shape = convolutional_bias(output, output_test, output_shape, 1024, (1, 1))
     all_parameters += params
     output, output_test, params, output_shape = activation(output, output_test, output_shape, 'relu')
-    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 1024, (1, 1))
+    output, output_test, params, output_shape = convolutional_bias(output, output_test, output_shape, 1024, (1, 1))
     all_parameters += params
 
     # maxpool with size=(4, 4) and fully connected
-    output, output_test, params, output_shape = convolutional(output, output_test, output_shape, 110, (1, 1))
+    output, output_test, params, output_shape = convolutional_bias(output, output_test, output_shape, 110, (1, 1))
     all_parameters += params
 
     output, output_test, params, output_shape, cacc_parameters = batch_norm(output, output_test, output_shape)

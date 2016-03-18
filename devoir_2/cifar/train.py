@@ -76,7 +76,7 @@ targets_100 = tensor.fmatrix('fine_labels')
 
 output_10, output_test_10, output_100, output_test_100, all_parameters, acc_parameters = get_model(X, batch_size, (32, 32))
 
-alpha = 0.5
+alpha = 1
 
 loss = alpha * categorical_crossentropy(output_10[:,:,0,0], targets).mean()
 loss.name = 'loss'
@@ -94,7 +94,7 @@ error_test = tensor.neq(tensor.argmax(output_test_10[:,:,0,0], axis=1), tensor.a
 error.name = 'error_test'
 
 # construct update rule
-learning_rate = 0.05
+learning_rate = 0.01
 updates, updates_100, updates_stats = [], [], []
 for param in all_parameters:
 	updates.append((param, param - learning_rate * tensor.grad(loss, param)))
