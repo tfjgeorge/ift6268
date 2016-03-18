@@ -2,10 +2,50 @@ import theano
 from theano.tensor.nnet.conv import conv2d
 from theano.tensor.signal.downsample import max_pool_2d
 from theano.tensor.nnet import relu
+from theano.tensor.nnet.bn import batch_normalization
 from blocks.graph import add_annotation, Annotation
 import numpy
 
 def convolutional(X, X_test, input_shape, n_filters, filter_size):
+	"""
+	Implementation of a convolutional layer
+
+	Parameters
+	----------
+	X
+	input_shape
+	n_filters
+	filter_size
+
+	Note
+	----
+	The convolutions are implemented using border_mode=valid, that is the 
+	output shape is the same as the input shape for the 2 last dimensions
+	"""
+
+	filters_shape = (n_filters, input_shape[1], filter_size[0], filter_size[1])
+	filters = theano.shared(
+		numpy.random.uniform(low=-0.1, high=0.1, size=filters_shape).astype(numpy.float32),
+		'conv_filters'
+	)
+
+	shift_x = (filter_size[0] - 1) // 2
+	shift_y = (filter_size[1] - 1) // 2
+
+	output_shape = (input_shape[0], n_filters, input_shape[2] - 2 * shift_x, input_shape[3] - 2 * shift_y)
+
+	output = conv2d(input=X, filters=filters, filter_shape=filters_shape, image_shape=input_shape, border_mode='valid')
+	output_test = conv2d(input=X_test, filters=filters, filter_shape=filters_shape, image_shape=input_shape, border_mode='valid')
+
+	"""
+	# the following was use to implement a border_mode=same
+	
+	output = output[:,:,shift_x:input_shape[2]+shift_x,shift_y:input_shape[3]+shift_y]
+	output_test = output_test[:,:,shift_x:input_shape[2]+shift_x,shift_y:input_shape[3]+shift_y]
+	"""
+	return output, output_test, [filters], output_shape
+
+def convolutional_bias(X, X_test, input_shape, n_filters, filter_size):
 	"""
 	Implementation of a convolutional layer
 
@@ -105,4 +145,4 @@ def batch_norm(X, X_test, input_shape):
 	output = gammas * (X - means) / (variances + epsilon)**0.5 + betas
 	output_test = gammas * (X - means_test) / (variances_test + epsilon)**0.5 + betas
 
-	return output, X_test, [gammas, betas], input_shape, [(means, means_test), (variances, variances_test)]
+	return output, output_test, [gammas, betas], input_shape, [(means, means_test), (variances, variances_test)]
