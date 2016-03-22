@@ -1,0 +1,4 @@
+*pbs*
+*.pyc
+*.out
+*.npz
