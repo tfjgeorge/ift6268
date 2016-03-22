@@ -6,39 +6,38 @@ from blocks.extensions.monitoring import TrainingDataMonitoring, DataStreamMonit
 from blocks.graph import ComputationGraph
 from blocks.main_loop import MainLoop
 
-from fuel.datasets import CIFAR10, CIFAR100
+from fuel.datasets import CIFAR10
 from fuel.streams import DataStream
 from fuel.schemes import SequentialScheme
+from fuel.transformers import ScaleAndShift, Cast
 
 import lasagne
 
-from model import build_model
 import numpy
 import socket
 import theano
 from theano import tensor
 from theano.tensor.nnet import categorical_crossentropy
-from transformers import OneHotEncode10, OneHotEncode100, RandomHorizontalFlip
+from transformers import OneHotEncode10, RandomHorizontalFlip, MinimumImageDimensions
 import pickle
 
 # max = 45000
 n_ex = 40000/32*32
-alpha = 0.5
-suffix = 'alpha%.2f_nex%d' % (alpha, n_ex)
+suffix = ''
 
 running_on_laptop = socket.gethostname() == 'yop'
 if running_on_laptop:
+	from model_cpu import build_model
 	host_plot = 'http://localhost:5006'
 	slice_train = slice(0, 32*10)
 	slice_valid = slice(32*10, 32*10+32*5)
 	slice_test = slice(32*15, 32*15+32*5)
-	slice_100 = slice(0, 32*10)
 else:
+	from model import build_model
 	host_plot = 'http://hades.calculquebec.ca:5042'
 	slice_train = slice(0,n_ex)
 	slice_test = slice(45000,50000-8)
 	slice_valid = slice(40000,45000-8)
-	slice_100 = slice(0, 50000)
 
 
 ## Load cifar10 stream
@@ -54,6 +53,9 @@ train_stream = DataStream.default_stream(
 )
 train_stream = OneHotEncode10(train_stream, which_sources=('targets',))
 train_stream = RandomHorizontalFlip(train_stream, which_sources=('features',))
+train_stream = MinimumImageDimensions(train_stream, (224, 224), which_sources=('features',))
+train_stream = ScaleAndShift(train_stream, 1./255, 0, which_sources=('features',))
+train_stream = Cast(train_stream, 'floatX', which_sources=('features',))
 
 valid_dataset = CIFAR10(('train',), subset=slice_valid)
 valid_stream = DataStream.default_stream(
@@ -61,6 +63,10 @@ valid_stream = DataStream.default_stream(
     iteration_scheme=SequentialScheme(valid_dataset.num_examples, batch_size)
 )
 valid_stream = OneHotEncode10(valid_stream, which_sources=('targets',))
+valid_stream = MinimumImageDimensions(valid_stream, (224, 224), which_sources=('features',))
+valid_stream = ScaleAndShift(valid_stream, 1./255, 0, which_sources=('features',))
+valid_stream = Cast(valid_stream, 'floatX', which_sources=('features',))
+
 
 test_dataset = CIFAR10(('train',), subset=slice_test)
 test_stream = DataStream.default_stream(
@@ -68,6 +74,9 @@ test_stream = DataStream.default_stream(
     iteration_scheme=SequentialScheme(test_dataset.num_examples, batch_size)
 )
 test_stream = OneHotEncode10(test_stream, which_sources=('targets',))
+test_stream = MinimumImageDimensions(test_stream, (224, 224), which_sources=('features',))
+test_stream = ScaleAndShift(test_stream, 1./255, 0, which_sources=('features',))
+test_stream = Cast(test_stream, 'floatX', which_sources=('features',))
 
 ## build computational graph
 X = tensor.ftensor4('features')
@@ -78,7 +87,7 @@ net = build_model()
 model = pickle.load(open('./blvc_googlenet.pkl'))
 lasagne.layers.set_all_param_values(net['prob'], model['param values'])
 
-googlenet_features = net['pool5/7x7_s1']
+googlenet_features = lasagne.layers.get_output(net['pool5/7x7_s1'], X)
 
 # add a mlp on top of this
 W = theano.shared(
@@ -88,10 +97,10 @@ W = theano.shared(
 b = theano.shared(numpy.zeros(10).astype(numpy.float32))
 all_parameters = [W, b]
 
-output = tensor.dot(X, W) + b
+output = tensor.dot(googlenet_features, W) + b
 pred = tensor.nnet.softmax(output)
 
-loss = alpha * categorical_crossentropy(pred, targets).mean()
+loss = categorical_crossentropy(pred, targets).mean()
 loss.name = 'loss'
 
 loss_test = categorical_crossentropy(pred, targets).mean()
@@ -126,13 +135,13 @@ train_loss_hist, train_error_hist, valid_loss_hist, valid_error_hist, test_loss_
 epoch = 0
 patience = 5
 
-while True:
+# while True:
+for i in range(5):
 	epoch += 1
 
 	ei_train = train_stream.get_epoch_iterator()
 	ei_valid = valid_stream.get_epoch_iterator()
 	ei_test = test_stream.get_epoch_iterator()
-	ei_train_100 = train_stream_100.get_epoch_iterator()
 
 	train_loss, train_error, valid_loss, valid_error, test_loss, test_error = 0, 0, 0, 0, 0, 0
 			
@@ -141,6 +150,7 @@ while True:
 			batch = next(ei_train)
 		except StopIteration:
 			continue
+
 		outputs = f_train(batch[0], batch[1])
 		train_loss += outputs[0]
 		train_error += outputs[1]
