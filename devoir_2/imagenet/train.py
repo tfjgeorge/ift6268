@@ -54,7 +54,7 @@ train_stream = DataStream.default_stream(
 train_stream = OneHotEncode10(train_stream, which_sources=('targets',))
 train_stream = RandomHorizontalFlip(train_stream, which_sources=('features',))
 train_stream = MinimumImageDimensions(train_stream, (224, 224), which_sources=('features',))
-train_stream = ScaleAndShift(train_stream, 1./255, 0, which_sources=('features',))
+train_stream = ScaleAndShift(train_stream, 1., 0, which_sources=('features',))
 train_stream = Cast(train_stream, 'floatX', which_sources=('features',))
 
 valid_dataset = CIFAR10(('train',), subset=slice_valid)
@@ -64,7 +64,7 @@ valid_stream = DataStream.default_stream(
 )
 valid_stream = OneHotEncode10(valid_stream, which_sources=('targets',))
 valid_stream = MinimumImageDimensions(valid_stream, (224, 224), which_sources=('features',))
-valid_stream = ScaleAndShift(valid_stream, 1./255, 0, which_sources=('features',))
+valid_stream = ScaleAndShift(valid_stream, 1., 0, which_sources=('features',))
 valid_stream = Cast(valid_stream, 'floatX', which_sources=('features',))
 
 
@@ -75,7 +75,7 @@ test_stream = DataStream.default_stream(
 )
 test_stream = OneHotEncode10(test_stream, which_sources=('targets',))
 test_stream = MinimumImageDimensions(test_stream, (224, 224), which_sources=('features',))
-test_stream = ScaleAndShift(test_stream, 1./255, 0, which_sources=('features',))
+test_stream = ScaleAndShift(test_stream, 1., 0, which_sources=('features',))
 test_stream = Cast(test_stream, 'floatX', which_sources=('features',))
 
 ## build computational graph
@@ -198,8 +198,6 @@ for i in range(5):
 		print 'improved valid error'
 		# save weights
 		numpy.savez('best_weights_%s.npz' % (suffix,), [param.get_value() for param in all_parameters])
-		# save batch norm weights
-		numpy.savez('best_weights_bn_%s.npz' % (suffix,), [acc.get_value() for val, acc in acc_parameters])
 	else:
 		patience -= 1
 		if patience == 0:

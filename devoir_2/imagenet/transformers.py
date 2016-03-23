@@ -107,4 +107,7 @@ class MinimumImageDimensions(SourcewiseTransformer):
                 example = im.transpose(2, 0, 1)
             else:
                 example = im
+            
+            # Convert to BGR
+            example = example[::-1, :, :]
         return example
