@@ -116,6 +116,10 @@ A follow-up was proposed by Ulyanov et al., who describe a generator network tha
 
 \section{Generator network}
 
+\subsection{Architecture}
+
+\subsection{Training}
+
 \subsection{Issues}
 \subsubsection{Overfitting}
 
@@ -147,7 +151,12 @@ number of
 
 \section{Video textures}
 
-Starting from a trained
+\subsection{Motivation}
+Once we have a base texture generator, we can think of it as a way to sample from a texture manifold lying in the space of pixels. The random noise images given as input of the generators can be considered as latent variables that determine where to pick the sample along that manifold. By interpolating linearly between the pixels values for two random images we can get a sequence of images with each consecutive image being very similar to the previous one, and in the meantime being in the manifold of images that have a similar texture to the target texture. This idea motivates building sequences of frames that transform a texture image into a new texture image.
+
+We did not intend to generate realistic videos. As a simple example, think of the transformation between two textures representing red peppers. We do not see red pepper turn into air then back to red pepper in the real world. However we find the results visually appealing. Note that for some example (e.g. water) the video could look somehow realistic.
+
+\subsection{Procedure}
 
 \section*{References}
 
