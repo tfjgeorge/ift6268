@@ -71,28 +71,14 @@
 \maketitle
 
 \begin{abstract}
-  The abstract paragraph should be indented \nicefrac{1}{2}~inch
-  (3~picas) on both the left- and right-hand margins. Use 10~point
-  type, with a vertical spacing (leading) of 11~points.  The word
-  \textbf{Abstract} must be centered, bold, and in point size 12. Two
-  line spaces precede the abstract. The abstract must be limited to
-  one paragraph.
+  TODO
   
   An emphasize is put on understanding the different issues that arise when implementing and training texture generator networks.
 \end{abstract}
 
 \section{Introduction}
 
-\textbf{There is a new style file for papers submitted in 2016!}
-
-NIPS requires electronic submissions.  The electronic submission site
-is
-\begin{center}
-  \url{https://cmt.research.microsoft.com/NIPS2016/}
-\end{center}
-
-Please read carefully the instructions below and follow them
-faithfully.
+TODO
 
 \section{Feed-forward texture synthesis}
 
@@ -104,7 +90,17 @@ While the representations in the first layers are low level representations that
 
 \subsection{Formulating texture generation as an optimization problem}
 
+TODO
 
+In the following we will refer to the network used to define the lost function as the descriptor network.
+
+\subsection{Choosing layer to best describe a texture}
+
+A problem arising with this technique is that we have to choose which layer best describe a texture.
+
+Proposed solution : for each layer compute distance between gram matrix for layer for image and flipped image
+
+The network we use to extract our descriptors was pre trained on ImageNet. 
 
 \subsection{Texture synthesis strategies}
 
@@ -118,6 +114,10 @@ A follow-up was proposed by Ulyanov et al., who describe a generator network tha
 
 \subsection{Architecture}
 
+\subsection{Choosing the number of filters for each resolution}
+
+Choosing the number of filters used at each resolution is also a difficult problem with no real answer. As a heuristic, we consider the following: in our descriptor network, we made a choice for which layers to choose to best describe a texture. The choice of filters must be done with the idea that at each layer chosen in the descriptor network corresponds a spatial resolution, i.e. each time we do subsampling the spatial resolution is divided by 2. We should add more filters for the corresponding resolution in the generator network.
+
 \subsection{Training}
 
 \subsection{Issues}
@@ -125,7 +125,7 @@ A follow-up was proposed by Ulyanov et al., who describe a generator network tha
 
 A global minimum to this optimization problem is obvious : take the original texture image and you get a zero loss function. This is not desired, as we want the generator to be able to generate new texture images, not to reproduce an existing image. The optimization procedure does not seem to find this kind of minimum however.
 
-But an issue that arises is that the biases in the convolution layers learn a local optimum. This usually happens along the edges of the image and we hypothesize this is an effect of the border convolutions being zero-padded (\label{fig:overfit}). A solution could be to add a regularization term that penalizes images to be too close in a mini batch but this has not being explored due to lack of time.
+But an issue that arises is that the biases in the convolution layers learn a local optimum. This usually happens along the edges of the image and we hypothesize this is an effect of the border convolutions being zero-padded (\label{fig:overfit}). A solution could be to add a regularization term that penalizes images to be too close in a mini batch but this has not being explored due to lack of time. Another simpler solution could be to regularize the norm of the biases.
 
 To counter this issue we simply did not use bias, even if it allowed for faster initial convergence.
 
@@ -141,8 +141,6 @@ To counter this issue we simply did not use bias, even if it allowed for faster 
     \caption{Two images generated using two different noise images using a trained network that has learned a good minimum for the biases. Notice how both images are similar around the edges and especially in the corners, while being really different in the middle.}\label{fig:overfit}
 \end{figure}
 
-bias
-
 \subsubsection{Capacity}
 
 number of 
@@ -157,6 +155,13 @@ Once we have a base texture generator, we can think of it as a way to sample fro
 We did not intend to generate realistic videos. As a simple example, think of the transformation between two textures representing red peppers. We do not see red pepper turn into air then back to red pepper in the real world. However we find the results visually appealing. Note that for some example (e.g. water) the video could look somehow realistic.
 
 \subsection{Procedure}
+
+This section describes the procedure used to generate sequences of transformations between two texture images. We first sample two sets of random images of required sizes (256, 128, 64, 32, 16). We then interpolate between these two images, so that the random images given as input to the generator network are given by:
+$$x^{(i)}(t) = t \, x^{(i)}_1 + (1-t) \,  x^{(i)}_2 \, , t \in [0,1]$$
+
+We then construct a sequence with the output images. The frame rate is 30 per second and we increase $t$ by $0.01$ at each time step.
+
+\subsection{Experiments}
 
 \section*{References}
 
