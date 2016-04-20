@@ -23,6 +23,8 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{hyperref}
+
 
 \title{Texture sequence generation using convolutional networks}
 
@@ -78,11 +80,13 @@
 
 \section{Introduction}
 
-Automatic texture generation is a difficult problem that has many applications in artwork creation. Traditional tools use a base texture image that is copied and somehow modified to create what looks like a new texture. A recent paper by Gatys et al. proposed a radically new approach: use neural networks and an optimization procedure that allowed for 
+Automatic texture generation is a difficult problem that has many applications in artwork creation. Traditional tools use a base texture image that is copied and somehow modified to create what looks like a new texture. A recent paper by Gatys et al. \cite{gatys2015neural} \cite{gatys2015texture} proposed a radically new approach: use convolutional neural networks and an optimization procedure that allowed for creating very realistic new images of a given texture. This work and a follow-up by the same team that presented a technique to merge the style of an artwork with the content of a photograph led to the creation of the company, emphasizing the potential success for automatic artwork generation.
 
 This work was done as the term project for the course IFT6268: Vision given by Pr. Roland Memisevitch at Université de Montréal during Winter 2016.
 
-\section{Feed-forward texture synthesis}
+\section{Texture synthesis}
+
+In this section we describe the basic ideas behind the use of convolutional networks as tool to generate new images.
 
 \subsection{Using convolutional networks as feature descriptors}
 
@@ -102,25 +106,33 @@ A problem arising with this technique is that we have to choose which layer best
 
 Proposed solution : for each layer compute distance between gram matrix for layer for image and flipped image
 
-The network we use to extract our descriptors was pre trained on ImageNet. 
+The network we use to extract our descriptors was pre trained on ImageNet. TODO
 
 \subsection{Texture synthesis strategies}
 
-Gatys et al. proposed a strategy that consists in starting from a random image and iterate gradient descent steps on the value of the pixels to find a minimum of the loss function. This gives results that are visually appealing and is quite simple to train using a framework where getting the gradients by back-propagation is easy to do such as Theano. A caveat with this procedure is that it takes a full learning run each time you want to generate a new texture.
+Gatys et al. proposed a strategy that consists in starting from a random image and iterate gradient descent steps on the value of the pixels to find a minimum of the loss function. This gives results that are visually appealing and is quite simple to train using a framework where getting the gradients by back-propagation is easy to do such as Theano \cite{bastien2012theano}. A caveat with this procedure is that it takes a full learning run each time you want to generate a new texture.
 
-A follow-up was proposed by Ulyanov et al., who describe a generator network that uses random noise images as input to directly output a texture image. The texture generation only needs a feed forward pass which allows to generate images in near real time. This network is described in the following section.
-
-
+A follow-up was proposed by  \citeauthor{2016arXiv160303417U}, who describe a generator network that uses random noise images as input to directly output a texture image. The texture generation only needs a feed forward pass which allows to generate images in near real time. This network is described in the following section.
 
 \section{Generator network}
 
+In this section we describe the feed forward generator network that we use, some heuristics for choosing the hyperparameters and the issues encountered while training this networks.
+
 \subsection{Architecture}
+
+We use the generator network described in 
 
 \subsection{Choosing the number of filters for each resolution}
 
 Choosing the number of filters used at each resolution is also a difficult problem with no real answer. As a heuristic, we consider the following: in our descriptor network, we made a choice for which layers to choose to best describe a texture. The choice of filters must be done with the idea that at each layer chosen in the descriptor network corresponds a spatial resolution, i.e. each time we do subsampling the spatial resolution is divided by 2. We should add more filters for the corresponding resolution in the generator network.
 
 \subsection{Training}
+
+Training this generator network is challenging. Here are the setup that worked best in our experiments.
+
+We performed stochastic gradient descent on mini batches of size 5 up to 16 depending on if the model could fit on the GPU memory. We used Adam\cite{kingma2014adam} with a learning rate of $1e-3$, with early stopping. At each early stopping trigger we divided the learning rate by 5 then started a new learning procedure for a total of 3 runs. Training such a model takes about 2h on a Titan Black GPU.
+
+Implementing the model was done using the framework Blocks \cite{van2015blocks} on top of Theano. We used a pretrained VGGNet network available on the Lasagne Recipe repository.
 
 \subsection{Issues}
 \subsubsection{Overfitting}
@@ -163,32 +175,26 @@ $$x^{(i)}(t) = t \, x^{(i)}_1 + (1-t) \,  x^{(i)}_2 \, , t \in [0,1]$$
 
 We then construct a sequence with the output images. The frame rate is 30 per second and we increase $t$ by $0.01$ at each time step.
 
-\subsection{Experiments}
+\subsection{Experiments and discussion}
 
-\section*{References}
+We have mainly experimented using a red pepper texture as a base. The generated videos can be watched at \url{http://youtu.be/ghFM79hpPBw}. 
 
-References follow the acknowledgments. Use unnumbered first-level
-heading for the references. Any choice of citation style is acceptable
-as long as you are consistent. It is permissible to reduce the font
-size to \verb+small+ (9 point) when listing the references. {\bf
-  Remember that you can use a ninth page as long as it contains
-  \emph{only} cited references.}
-\medskip
+A further experiment consisted in varying only one random image at a time in the generator, keeping all other fixed. Interestingly, some random images are not used by the generator and varying them leads to no visual effect:
 
-\small
+\begin{center}
+  \begin{tabular}{  c | l | l }
+  Varying random image & Link & Comment\\
+    \hline
+    256 x 256 & \url{http://youtu.be/OJ_96ucypr4} & No effect\\ 
+    128 x 128 & \url{http://youtu.be/1kVjfbPmsTU} & No effect\\ 
+    64 x 64 & \url{http://youtu.be/j2SFynUCSOU} & Very light effect \\
+    32 x 32 & \url{http://youtu.be/J_f5wlW0xEg} & Light effect\\
+    16 x 16 & \url{http://youtu.be/BXvIU_ZIyNs} & Strong effect\\
+  \end{tabular}
+\end{center}
 
-[1] Alexander, J.A.\ \& Mozer, M.C.\ (1995) Template-based algorithms
-for connectionist rule extraction. In G.\ Tesauro, D.S.\ Touretzky and
-T.K.\ Leen (eds.), {\it Advances in Neural Information Processing
-  Systems 7}, pp.\ 609--616. Cambridge, MA: MIT Press.
 
-[2] Bower, J.M.\ \& Beeman, D.\ (1995) {\it The Book of GENESIS:
-  Exploring Realistic Neural Models with the GEneral NEural SImulation
-  System.}  New York: TELOS/Springer--Verlag.
-
-[3] Hasselmo, M.E., Schnell, E.\ \& Barkai, E.\ (1995) Dynamics of
-learning and recall at excitatory recurrent synapses and cholinergic
-modulation in rat hippocampal region CA3. {\it Journal of
-  Neuroscience} {\bf 15}(7):5249-5262.
+\bibliographystyle{plain}
+\bibliography{biblio}
 
 \end{document}
